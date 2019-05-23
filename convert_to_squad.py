@@ -49,6 +49,9 @@ def get_squad_element():
         ],
     }
 
+def get_chapter_title(chapter_row):
+    pass
+
 def process_chapter(chapter_file, test_file):
     with open(chapter_file) as chapter_fh, open(test_file) as test_fh:
         chapter_csv_reader = csv.reader(chapter_fh)
@@ -57,10 +60,15 @@ def process_chapter(chapter_file, test_file):
         chapter_number = get_chapter_number_from_file(test_file)
         ctx_key = get_context_key(chapter_number)
 
+        chapter_rows = []
         for row in chapter_csv_reader:
-            values = [s.strip() for s in row if s]
-            if len(values) != 2:
+            row = [s.strip() for s in row if s]
+            if len(row) != 2:
                 continue
+            chapter_rows.append(row)
+
+        chapter_title = get_chapter_title(chapter_rows[0])
+        print('Title:%s' % chapter_rows[0])
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
