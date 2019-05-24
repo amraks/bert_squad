@@ -1,3 +1,4 @@
+import re
 import os
 import csv
 
@@ -49,26 +50,41 @@ def get_squad_element():
         ],
     }
 
-def get_chapter_title(chapter_row):
-    pass
+def get_chapter_title(s):
+    return ''.join(re.findall(r'[A-Z]{2,}', s)) or ''
+
+# text dump of all chapters
+dump = {}
+
+def update_dump(chapter_number, chapter_rows):
+    dump[chapter_number] = ''.join([x[1] for x in chapter_rows])
 
 def process_chapter(chapter_file, test_file):
     with open(chapter_file) as chapter_fh, open(test_file) as test_fh:
         chapter_csv_reader = csv.reader(chapter_fh)
         test_csv_reader = csv.reader(test_fh)
 
-        chapter_number = get_chapter_number_from_file(test_file)
-        ctx_key = get_context_key(chapter_number)
-
         chapter_rows = []
         for row in chapter_csv_reader:
             row = [s.strip() for s in row if s]
             if len(row) != 2:
                 continue
+            # format of row: ['id', 'content']
             chapter_rows.append(row)
 
-        chapter_title = get_chapter_title(chapter_rows[0])
-        print('Title:%s' % chapter_rows[0])
+        squad_element = get_squad_element()
+
+        # 1st row has the title
+        chapter_title = get_chapter_title(chapter_rows[0][1])
+        squad_element['title'] = chapter_title
+
+        chapter_number = get_chapter_number_from_file(test_file)
+        update_dump(chapter_number, chapter_rows)
+
+        q_and_a_rows = []
+        for row in test_csv_reader:
+            print(row)
+
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
