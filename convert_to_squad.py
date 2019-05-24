@@ -70,12 +70,10 @@ def update_dump_context(chapter_number, chapter_rows):
         dump[chapter_number] = get_dump_element_template()
     dump[chapter_number]['context'] = ''.join([x[1] for x in chapter_rows])
 
-def update_dump_q_and_a(chapter_number):
-    if chapter_number not in dump:
-        dump[chapter_number] = get_dump_element_template()
-
 def get_question(text):
-    return text.split(' ')[1] if text and len(text.split()) >= 2 else ''
+    return re.split(r'\.', text)[1] if text and len(text.split()) >= 2 else ''
+
+used_uuids = set()
 
 def process_chapter(chapter_file, test_file):
     with open(chapter_file) as chapter_fh, open(test_file) as test_fh:
@@ -102,8 +100,7 @@ def process_chapter(chapter_file, test_file):
         update_dump_context(chapter_number, chapter_rows)
 
         q_and_a_rows = []
-        print('chapter:%s' % chapter_title)
-        used = set()
+        print('chapter %s:%s' % (chapter_number, chapter_title))
 
         for row in test_csv_reader:
             if not row:
@@ -111,13 +108,17 @@ def process_chapter(chapter_file, test_file):
 
             text = row[0]
 
-            if re.search(r'^\s+\d{0,4}\.\s+', text):
+            if re.match(r'^\s+\d{0,4}\.\s+', text):
                 # Question
                 # generate uuid
                 q_id = str(uuid.uuid4())
+                while q_id in used_uuids:
+                    q_id = str(uuid.uuid4())
+                used_uuids.add(q_id)
                 squad_q_and_a_element_for_paragraph = get_q_and_a_element_for_paragraph()
                 squad_q_and_a_element_for_paragraph['id'] = q_id
                 squad_q_and_a_element_for_paragraph['question'] = get_question(text)
+                dump[chapter_number]['q_and_a'].append(squad_q_and_a_element_for_paragraph)
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
@@ -128,6 +129,8 @@ def main():
         test_file = get_test_file_for_chapter(tests_dir, chapter_file_name)
         chapter_file = os.path.join(chapters_dir, chapter_file_name)
         process_chapter(chapter_file, test_file)
+        break
+    print(dump['22']['q_and_a'])
 
 if __name__ == '__main__':
     main()
