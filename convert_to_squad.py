@@ -17,9 +17,6 @@ def get_test_file_for_chapter(tests_dir, chapter_file_name):
 def get_chapter_number_from_file(f):
     return os.path.basename(f).split('_ch')[1].split('_')[0]
 
-def get_context_key(chapter_number):
-    return 'chapter-%s' % chapter_number
-
 def get_answer_element_for_q_and_a_element_within_paragraph():
     return {
         'answer_start' : '',
