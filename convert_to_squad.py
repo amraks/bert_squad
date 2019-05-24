@@ -51,13 +51,27 @@ def get_squad_element():
     }
 
 def get_chapter_title(s):
-    return ''.join(re.findall(r'[A-Z]{2,}', s)) or ''
+    return ' '.join(re.findall(r'[A-Z]{2,}', s)) or ''
 
 # text dump of all chapters
 dump = {}
 
-def update_dump(chapter_number, chapter_rows):
-    dump[chapter_number] = ''.join([x[1] for x in chapter_rows])
+def get_dump_element_template():
+    return {
+        'context' : '',
+        'q_and_a' : [
+
+        ]
+    }
+
+def update_dump_context(chapter_number, chapter_rows):
+    if chapter_number not in dump:
+        dump[chapter_number] = get_dump_element_template()
+    dump[chapter_number]['context'] = ''.join([x[1] for x in chapter_rows])
+
+def update_dump_q_and_a(chapter_number):
+    if chapter_number not in dump:
+        dump[chapter_number] = get_dump_element_template()
 
 def process_chapter(chapter_file, test_file):
     with open(chapter_file) as chapter_fh, open(test_file) as test_fh:
@@ -78,13 +92,20 @@ def process_chapter(chapter_file, test_file):
         chapter_title = get_chapter_title(chapter_rows[0][1])
         squad_element['title'] = chapter_title
 
+        #print(chapter_title)
+
         chapter_number = get_chapter_number_from_file(test_file)
-        update_dump(chapter_number, chapter_rows)
+        update_dump_context(chapter_number, chapter_rows)
 
         q_and_a_rows = []
+        print('chapter:%s' % chapter_title)
         for row in test_csv_reader:
-            print(row)
-
+            if not row:
+                continue
+            text = row[0]
+            if re.search(r'^\s+\d{0,4}\.\s+', text):
+                # Question
+                print(text)
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
