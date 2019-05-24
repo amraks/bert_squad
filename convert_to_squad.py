@@ -2,10 +2,10 @@ import re
 import os
 import csv
 import uuid
+import json
 
 squad_data = {
     'data' : [
-
     ]
 }
 
@@ -51,9 +51,6 @@ def get_squad_element():
 def get_chapter_title(s):
     return ' '.join(re.findall(r'[A-Z]{2,}', s)) or ''
 
-# text dump of all chapters
-dump = {}
-
 def get_dump_element_template():
     return {
         'context' : '',
@@ -62,10 +59,8 @@ def get_dump_element_template():
         ]
     }
 
-def update_dump_context(chapter_number, chapter_rows):
-    if chapter_number not in dump:
-        dump[chapter_number] = get_dump_element_template()
-    dump[chapter_number]['context'] = ''.join([x[1] for x in chapter_rows])
+def get_chapter_context(chapter_rows):
+    return ''.join([x[1] for x in chapter_rows])
 
 def get_question(text):
     return re.split(r'\.', text)[1] if text and len(text.split()) >= 2 else ''
@@ -86,19 +81,19 @@ def process_chapter(chapter_file, test_file):
             chapter_rows.append(row)
 
         squad_element = get_squad_element()
+        squad_data['data'].append(squad_element)
 
         # 1st row has the title
         chapter_title = get_chapter_title(chapter_rows[0][1])
         squad_element['title'] = chapter_title
-
-        #print(chapter_title)
-
-        chapter_number = get_chapter_number_from_file(test_file)
-        update_dump_context(chapter_number, chapter_rows)
+        chapter_context = get_chapter_context(chapter_rows)
+        paragraph_element = get_paragraph_element()
+        paragraph_element['context'] = chapter_context
+        squad_element['paragraphs'].append(paragraph_element)
 
         q_and_a_rows = []
-        print('chapter %s:%s' % (chapter_number, chapter_title))
 
+        number_questions = 0
         for row in test_csv_reader:
             if not row:
                 continue
@@ -107,6 +102,7 @@ def process_chapter(chapter_file, test_file):
 
             if re.match(r'^\s+\d{0,4}\.\s+', text):
                 # Question
+                number_questions += 1
                 # generate uuid
                 q_id = str(uuid.uuid4())
                 while q_id in used_uuids:
@@ -115,7 +111,10 @@ def process_chapter(chapter_file, test_file):
                 squad_q_and_a_element_for_paragraph = get_q_and_a_element_for_paragraph()
                 squad_q_and_a_element_for_paragraph['id'] = q_id
                 squad_q_and_a_element_for_paragraph['question'] = get_question(text)
-                dump[chapter_number]['q_and_a'].append(squad_q_and_a_element_for_paragraph)
+                paragraph_element['qas'].append(squad_q_and_a_element_for_paragraph)
+
+        chapter_number = get_chapter_number_from_file(test_file)
+        print('chapter %s:%s number_questions:%s' % (chapter_number, chapter_title, number_questions))
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
@@ -126,8 +125,8 @@ def main():
         test_file = get_test_file_for_chapter(tests_dir, chapter_file_name)
         chapter_file = os.path.join(chapters_dir, chapter_file_name)
         process_chapter(chapter_file, test_file)
-        break
-    print(dump['22']['q_and_a'])
+        #break
+    #print(json.dumps(squad_data['data']))
 
 if __name__ == '__main__':
     main()
