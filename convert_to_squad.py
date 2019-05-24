@@ -126,7 +126,7 @@ def main():
         chapter_file = os.path.join(chapters_dir, chapter_file_name)
         process_chapter(chapter_file, test_file)
         #break
-    #print(json.dumps(squad_data['data']))
+    print(json.dumps(squad_data))
 
 if __name__ == '__main__':
     main()
