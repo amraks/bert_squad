@@ -82,6 +82,7 @@ def process_chapter(chapter_file, test_file):
         paragraph_element = get_paragraph_element()
         paragraph_element['context'] = chapter_context
         squad_element['paragraphs'].append(paragraph_element)
+        chapter_context_lower = chapter_context.lower()
 
         q_and_a_rows = []
 
@@ -114,7 +115,6 @@ def process_chapter(chapter_file, test_file):
                             if j + 1 < len(q_and_a_rows):
                                 next_line_after_option_text = q_and_a_rows[j+1][0]
                                 answer_map[opt] = next_line_after_option_text
-                                #print('%s:%s' % (opt, next_line_after_option_text))
                         j += 1
 
                         m = re.match(r'^\s*ANS:\s*(?P<answer_option>[A-D]).*', answer_text) #matches 'ANS:'
@@ -122,8 +122,8 @@ def process_chapter(chapter_file, test_file):
                             answer_option = m.group('answer_option')
                             answer_option_lower = answer_option.lower()
                             if answer_option_lower in answer_map:
-                                final_answer = answer_map[answer_option_lower]
-                                final_answer_offset = chapter_context.find(final_answer)
+                                final_answer = (answer_map[answer_option_lower]).strip('.')
+                                final_answer_offset = chapter_context_lower.find(final_answer.lower())
 
                 if final_answer and final_answer_offset != -1:
 
@@ -143,13 +143,10 @@ def process_chapter(chapter_file, test_file):
                     squad_q_and_a_element_for_paragraph['answers'].append(squad_answer_element)
                     paragraph_element['qas'].append(squad_q_and_a_element_for_paragraph)
 
+            if number_questions >= 50:
                 break
 
-            if number_questions >= 30:
-                break
-
-        chapter_number = get_chapter_number_from_file(test_file)
-        #print('chapter %s:%s number_questions:%s' % (chapter_number, chapter_title, number_questions))
+        #chapter_number = get_chapter_number_from_file(test_file)
 
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
@@ -160,8 +157,8 @@ def main():
         test_file = get_test_file_for_chapter(tests_dir, chapter_file_name)
         chapter_file = os.path.join(chapters_dir, chapter_file_name)
         process_chapter(chapter_file, test_file)
-        break
-    print(json.dumps(squad_data['data'][0]['paragraphs'][0]['qas']))
+    #for e in squad_data['data']:
+    #    print(json.dumps(e['paragraphs'][0]['qas']))
 
 if __name__ == '__main__':
     main()
