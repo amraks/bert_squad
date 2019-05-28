@@ -159,6 +159,8 @@ def main():
         process_chapter(chapter_file, test_file)
     #for e in squad_data['data']:
     #    print(json.dumps(e['paragraphs'][0]['qas']))
+    with open('squad_output_richard.json', 'w') as f:
+        json.dump(squad_data, f)
 
 if __name__ == '__main__':
     main()
