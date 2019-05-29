@@ -19,7 +19,7 @@ def get_chapter_number_from_file(f):
 
 def get_answer_element_for_q_and_a_element_within_paragraph():
     return {
-        'answer_start' : '',
+        'answer_start' : None,
         'text' : ''
     }
 
@@ -122,10 +122,10 @@ def process_chapter(chapter_file, test_file):
                             answer_option = m.group('answer_option')
                             answer_option_lower = answer_option.lower()
                             if answer_option_lower in answer_map:
-                                final_answer = (answer_map[answer_option_lower]).strip('.')
+                                final_answer = (answer_map[answer_option_lower]).strip('.\n\t ')
                                 final_answer_offset = chapter_context_lower.find(final_answer.lower())
 
-                if final_answer and final_answer_offset != -1:
+                if final_answer:
 
                     # generate uuid
                     q_id = str(uuid.uuid4())
@@ -139,7 +139,9 @@ def process_chapter(chapter_file, test_file):
 
                     squad_answer_element = get_answer_element_for_q_and_a_element_within_paragraph()
                     squad_answer_element['text'] = final_answer
-                    squad_answer_element['answer_start'] = final_answer_offset
+                    if final_answer_offset != -1: # only put valid offset
+                        squad_answer_element['answer_start'] = final_answer_offset
+
                     squad_q_and_a_element_for_paragraph['answers'].append(squad_answer_element)
                     paragraph_element['qas'].append(squad_q_and_a_element_for_paragraph)
 
@@ -151,14 +153,14 @@ def process_chapter(chapter_file, test_file):
 def main():
     chapters_dir = os.path.join(os.path.abspath('.'), "process_chapter")
     tests_dir = os.path.join(os.path.abspath('.'), "process_test")
+
     for chapter_file_name in os.listdir(chapters_dir):
         if not chapter_file_name.endswith('.csv'):
             continue
         test_file = get_test_file_for_chapter(tests_dir, chapter_file_name)
         chapter_file = os.path.join(chapters_dir, chapter_file_name)
         process_chapter(chapter_file, test_file)
-    #for e in squad_data['data']:
-    #    print(json.dumps(e['paragraphs'][0]['qas']))
+
     with open('squad_output_richard.json', 'w') as f:
         json.dump(squad_data, f)
 
